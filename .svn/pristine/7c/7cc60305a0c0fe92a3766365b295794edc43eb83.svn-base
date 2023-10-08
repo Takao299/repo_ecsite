@@ -1,0 +1,13 @@
+package com.bh.ecsite.dao;
+
+import java.sql.Connection;
+
+public class PurchaseDetailDAO extends CommonDAO {
+	Connection connection = null;
+
+	public PurchaseDetailDAO(Connection connection) {
+		super(connection);
+		// TODO 自動生成されたコンストラクター・スタブ
+	}
+
+}

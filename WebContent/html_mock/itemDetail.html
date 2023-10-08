@@ -1,0 +1,47 @@
+<html>
+	<head>
+		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+		<title>商品詳細</title>
+		<link rel='stylesheet' type='text/css' href='style.css' />
+	</head>
+	<body>
+		<h3>商品の詳細表示</h3>
+		<br />
+		<table>
+			<tr>
+				<th>商品名</th>
+				<td>麦わら帽子</td>
+			</tr>
+			<tr>
+				<th>商品の色</th>
+				<td>黄色</td>
+			</tr>
+			<tr>
+				<th>メーカー名</th>
+				<td>日本帽子製造</td>
+			</tr>
+			<tr>
+				<th>価格</th>
+				<td>4980円</td>
+			</tr>
+			<tr>
+				<th>在庫数</th>
+				<td>12 個</td>
+			</tr>
+		</table>
+		<form action='cart.html' method='POST'>
+			数量
+			<select name='amount'>
+				<option selected value='1'>1</option>
+				<option value='2'>2</option>
+				<option value='3'>3</option>
+				<option value='4'>4</option>
+				<option value='5'>5</option>
+			</select><br />
+			<input type='hidden' name='itemId' value='123' />
+			<input type='submit' value='ショッピングカートに入れる' /><br />
+			※ログインしていない状態では、ボタンのクリック後、<a href='lgogin.html'>ログイン画面</a>に転送される。<br />
+		</form>
+		<a href='main.html'>商品検索</a>へ<br />
+	</body>
+</html>

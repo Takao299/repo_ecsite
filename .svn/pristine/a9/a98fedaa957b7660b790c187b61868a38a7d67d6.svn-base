@@ -1,0 +1,154 @@
+package com.bh.ecsite.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+
+import com.bh.ecsite.common.AmazonException;
+import com.bh.ecsite.value.ItemInCartDTO;
+
+
+public class CartDAO {
+	Connection connection = null;
+
+	/**
+	 * DAOインスタンス化時にConnectionを引数でもらう
+	 * @param connection
+	 */
+	public CartDAO(Connection connection){
+		this.connection = connection;
+	}
+
+
+	public ArrayList<ItemInCartDTO> selectByIdToCart(ItemInCartDTO cartDomain) throws AmazonException{
+
+		PreparedStatement ps = null;
+
+		//1件以上DBからの検索結果を返却するので、DTOを要素に持つコレクション
+		//を戻り値で返却用にインスタンス化
+		ArrayList<ItemInCartDTO> list = new ArrayList<ItemInCartDTO>();
+		try {
+
+
+			String sql = "SELECT name, color, manufacturer, price, amount FROM public.items AS I1 "
+					+" INNER JOIN public.items_in_cart AS I2 ON I1.item_id = I2.item_id WHERE user_id = ?;";
+
+					//"SELECT user_id, item_id, amount, booked_date FROM public.items_in_cart WHERE user_id = ?";
+
+			//SQL実行オブジェクトの取得
+			ps = connection.prepareStatement(sql);
+
+			//WHEREに主キー値をセット
+			ps.setString(1, cartDomain);
+			ResultSet rs = ps.executeQuery();
+
+
+//			while(rs.next()) {
+//				//結果セットのレコード件数分、DTOに値を詰め込んでコレクション
+//				//に格納するので、while内でDTOをnewする。
+//				//whileの外でDTOをnewしても意味がないので注意！
+//				CartDTO cartDTO = new ItemInCartDTO();
+//				cartDTO.setUserId(rs.getString("name"));
+//				cartDTO.setItemId(rs.getInt("color"));
+//				cartDTO.setAmount(rs.getInt("manufacturer"));
+//				cartDTO.setBookedDate(rs.getDate("price"));
+//				cartDTO.setBookedDate(rs.getDate("amount"));
+//
+//				//コレクションにDTOをセット
+//				list.add(itemInCartDTO);
+//
+//			}
+//			return list;
+
+
+
+			 ItemDAO dao = new ItemDAO();
+
+			while(rs.next()) {
+				//結果セットのレコード件数分、DTOに値を詰め込んでコレクション
+				//に格納するので、while内でDTOをnewする。
+				//whileの外でDTOをnewしても意味がないので注意！
+				ItemInCartDTO itemInCartDTO = new ItemInCartDTO();
+				itemInCartDTO.setUserId(rs.getString("user_id"));
+				//itemInCartDTO.setItemId(rs.getInt("item"));
+
+
+			     ItemInCartDTO dto = new temInCartDTO();
+
+			　　//ユーザIDをセット
+			     dto.setId(rs.getString("user_id"));
+
+				  ItemDTO item = dao.selectByIdI(rs.getString("item_id"))
+				//ItemInCartとItemDTOの関連づけ
+				     dto.setItem(item);
+
+
+				itemInCartDTO.setAmount(rs.getInt("amount"));
+				itemInCartDTO.setBookedDate(rs.getDate("bookedDate"));
+
+				//コレクションにDTOをセット
+				list.add(itemInCartDTO);
+
+			}
+			return list;
+
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			throw new AmazonException(e);
+		}
+
+	}
+
+}
+
+
+
+
+/*
+ *
+ *
+ *
+class ItemDAO{
+
+ ItemDTO selectByIdI(STring itemID){
+
+
+}
+
+
+
+class ItemInCartDAO{
+
+ ArrayList<ItemInCart> selectByUserId(String userId){
+
+//商品テーブルと結合しない
+ String sql = "SELECT * FORM items_in_cart WHERE user_id = ?";
+
+　//前田さんチームが作ってくれる！
+ ItemDAO dao = new ItemDAO();
+  while(rs.next()){
+
+     ItemInCartDTO dto = new ItemInCartDTO();
+
+　　//ユーザIDをセット
+     dto.setId(rs.getString("user_id"));
+
+
+　　　//SELECTした結果から、item_idを取り出し、前田さんDAOのメソッドを
+　　　//呼び出せば、ItemDTOが得られる！（自分でつくらなくていい）
+     ItemDTO item = dao.selectByIdI(rs.getString("item_id"))
+
+　　　//ItemInCartとItemDTOの関連づけ
+     dto.setItem(item);
+
+    //以下のように、ItemInCartDT商品名を取り出せる！
+　　//dto.item.getName();
+　　　dto.amount
+
+
+
+  }
+ *
+ */

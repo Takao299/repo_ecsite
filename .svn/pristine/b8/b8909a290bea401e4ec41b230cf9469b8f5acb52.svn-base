@@ -1,0 +1,292 @@
+package com.bh.ecsite.dao;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import com.bh.ecsite.value.ItemDTO;
+import com.bh.ecsite.value.PurchaseDTO;
+import com.bh.ecsite.value.PurchaseDetailDTO;
+import com.bh.ecsite.value.UserDTO;
+
+
+//public class PurchaseDAO extends CommonDAO {
+public class PurchaseDAO {
+	Connection connection = null;
+
+	/**
+	 * DAOインスタンス化時にConnectionを引数でもらう
+	 * @param connection
+	 */
+	public PurchaseDAO(Connection connection){
+		this.connection = connection;
+	}
+	//	public PurchaseDAO(Connection connection){
+	//		super(connection);
+	//	}
+
+	public int seqPurchaseId() throws SQLException{
+		PreparedStatement ps = null;
+
+		try {
+			String sql = "select nextval('seq_purchase_id') as purchase_id";
+			ps = connection.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+			int purchaseId = -1;
+			if(rs.next()) {
+				purchaseId = rs.getInt("purchase_id");
+			}
+			return purchaseId;
+
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			throw e;
+		}
+		finally {
+			try{
+				if(ps != null && !ps.isClosed()) {
+					ps.close();
+				}
+			}
+			catch(SQLException e) {
+				throw e;
+			}
+		}
+	}
+
+
+	public void incertPurchace(UserDTO loginDomain,int purchaseId) throws SQLException{
+		PreparedStatement ps = null;
+
+		try {
+			String sql = "INSERT INTO public.purchases (purchase_id, purchased_user, purchased_date, destination, cancel) VALUES (?, ?, ?, ?, false);";
+			ps = connection.prepareStatement(sql);
+
+
+			//SQLのnow()関数 … 文字列として取得する場合は 'YYYY-MM-DD hh:mm:ss' 形式、数値として取得する場合は YYYYMMDDhhmmss 形式で取得します。
+			//javaの方でDate型取ってSQLに渡します
+			long utildate = new java.util.Date().getTime();
+			Date date = new Date(utildate);	//longをDateクラスの引数に入れるとDate型に変換される？
+
+			//1つ目の?はpurchase_id、2つ目の?user_id、3つ目の?はpurchased_date、4つ目の?address
+			ps.setInt(1, purchaseId);
+			ps.setString(2, loginDomain.getUserId());
+			ps.setDate(3, date);
+			ps.setString(4, loginDomain.getAddress());
+			ps.executeUpdate();	//1件のみ挿入
+
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			throw e;
+		}
+		finally {
+			try{
+				if(ps != null && !ps.isClosed()) {
+					ps.close();
+				}
+			}
+			catch(SQLException e) {
+				throw e;
+			}
+		}
+	}
+
+
+	//注文詳細テーブルに１件挿入 注文詳細IDはシーケンスで取得（参照）
+	public void incertPurchaseDetail(int purchaseId,int itemId, int amount) throws SQLException{
+		PreparedStatement ps = null;
+
+		try {
+			String sql = "INSERT INTO public.purchase_details (purchase_detail_id, purchase_id, item_id, amount) VALUES ((select nextval('seq_pur_detail_id')), ?, ?, ?);";
+			//			ps = connection.prepareStatement(sql);
+			ps = connection.prepareStatement(sql);
+
+
+			ps.setInt(1, purchaseId);	//全部同じ
+			ps.setInt(2, itemId);
+			ps.setInt(3, amount);
+			ps.executeUpdate();	// 1件ずつ挿入
+
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			throw e;
+		}
+		finally {
+			try{
+				if(ps != null && !ps.isClosed()) {
+					ps.close();
+				}
+			}
+			catch(SQLException e) {
+				throw e;
+			}
+		}
+	}
+
+	public ArrayList<PurchaseDetailDTO> selectAll(int purchaseId) throws Exception{
+		PreparedStatement ps = null;
+		ArrayList<PurchaseDetailDTO> list = new ArrayList<PurchaseDetailDTO>();
+
+		try {
+			String sql = "SELECT * FROM purchase_details WHERE purchase_id=?;";
+			//			ps = connection.prepareStatement(sql);
+
+			ps = connection.prepareStatement(sql);
+			ps.setInt(1, purchaseId);
+			ResultSet rs = ps.executeQuery();
+
+
+			while(rs.next()) {
+				PurchaseDetailDTO pdDTO = new PurchaseDetailDTO();
+				pdDTO.setPurchaseDetailId(rs.getInt("purchase_detail_id"));
+				pdDTO.setPurchaseId(purchaseId);
+				ItemsDAO itemsDao = new ItemsDAO(connection);
+				ItemDTO itemDTO = itemsDao.selectByItemId(rs.getInt("item_id"));
+				pdDTO.setItem(itemDTO);
+				pdDTO.setAmount(rs.getInt("amount"));
+
+				list.add(pdDTO);
+			}
+
+			return list;
+
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			throw e;
+		}
+		finally {
+			try{
+				if(ps != null && !ps.isClosed()) {
+					ps.close();
+				}
+			}
+			catch(SQLException e) {
+				throw e;
+			}
+		}
+	}
+
+
+	public PurchaseDTO selectById(int purchaseId) throws Exception{
+		PreparedStatement ps = null;
+		try {
+			String sql = "SELECT * FROM purchases WHERE purchase_id=?;";
+			ps = connection.prepareStatement(sql);
+			ps.setInt(1, purchaseId);
+			ResultSet rs = ps.executeQuery();
+			PurchaseDTO pdDTOs=new PurchaseDTO();
+
+			if (rs.next()){
+				pdDTOs.setPurchaseId(rs.getInt("purchase_id"));
+				UserDAO userDao = new UserDAO(connection);
+				UserDTO userDTO = userDao.selectById(rs.getString("purchased_user"));
+				pdDTOs.setPurchasedUser(userDTO);
+				ArrayList<PurchaseDetailDTO> selectAll = selectAll(purchaseId);
+				pdDTOs.setPurchasedItems(selectAll);
+				pdDTOs.setPurchasedDate(rs.getDate("purchased_date"));
+				pdDTOs.setDestination(rs.getString("destination"));
+				pdDTOs.setCancel(rs.getBoolean("cancel"));
+
+			}
+			return pdDTOs;
+
+
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			throw e;
+		}
+		finally {
+			try{
+				if(ps != null && !ps.isClosed()) {
+					ps.close();
+				}
+			}
+			catch(SQLException e) {
+				throw e;
+			}
+		}
+	}
+
+	public ArrayList<PurchaseDTO> selectById(String userId)throws Exception{
+		PreparedStatement ps = null;
+		try {
+			String sql = "SELECT * FROM purchase WHERE user_id=?;";
+			ps = connection.prepareStatement(sql);
+			ps.setString(1, userId);
+			ResultSet rs = ps.executeQuery();
+
+			ArrayList<PurchaseDTO> pdsLists=new ArrayList<PurchaseDTO>();
+
+
+			while(rs.next()) {
+
+				PurchaseDTO pdDTOs = new PurchaseDTO();
+				pdDTOs=selectById(rs.getInt("purchase_id"));
+				pdsLists.add(pdDTOs);
+
+
+
+			}
+			return pdsLists;
+
+
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			throw e;
+		}
+		finally {
+			try{
+				if(ps != null && !ps.isClosed()) {
+					ps.close();
+				}
+			}
+			catch(SQLException e) {
+				throw e;
+			}
+		}
+	}
+
+
+
+	public void updateItems(int itemId,int stock) throws SQLException{
+		PreparedStatement ps = null;
+
+		try {
+			//item
+			String sql="UPDATE items SET stock=? WHERE item_id=?";
+			ps = connection.prepareStatement(sql);
+			ps.setInt(1,stock);
+			ps.setInt(2, itemId);
+
+			ps.executeUpdate();
+
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			throw e;
+		}
+		finally {
+			try{
+				if(ps != null && !ps.isClosed()) {
+					ps.close();
+				}
+			}
+			catch(SQLException e) {
+				throw e;
+			}
+		}
+
+	}
+
+
+
+}

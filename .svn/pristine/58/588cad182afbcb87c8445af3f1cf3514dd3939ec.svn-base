@@ -1,0 +1,11 @@
+package com.bh.ecsite.dao;
+
+import java.sql.Connection;
+
+public class CommonDAO {
+	protected Connection con;
+
+	public CommonDAO(Connection con) {
+		this.con = con;
+	}
+}

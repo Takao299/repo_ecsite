@@ -1,0 +1,124 @@
+package com.bh.ecsite.servlet;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import com.bh.ecsite.common.AmazonException;
+import com.bh.ecsite.common.PathConstant;
+import com.bh.ecsite.service.CartService;
+import com.bh.ecsite.value.ItemInCartDTO;
+import com.bh.ecsite.value.UserDTO;
+
+/**
+ * Servlet implementation class LoginController
+ *
+ * Loginを表すコントローラ
+ */
+@WebServlet("/Cart")
+public class CartServlet extends CommonServlet {
+	private static final long serialVersionUID = 1L;
+
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public CartServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+
+    /**
+     * リンククリック、別サイトから移動してきたときに呼ばれ、
+     * ログイン画面用のJSPを表示する。
+     *
+     */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		//response.getWriter().append("Served at: ").append(request.getContextPath());
+
+		doPost(request, response);
+	}
+
+	/**
+	 * ブラウザのformタグでPOST送信された時に呼ばれる
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		//doGet(request, response);
+
+
+		/*メイン画面、もしくは商品詳細表示画面から来るのだけど、
+		まずログインしていないとカートは開けないので
+		ログインしているかどうかを確認する
+
+		ログインしていないなら、
+		メイン画面、もしくは商品詳細表示画面から来たという情報をセッションに格納して
+		ログイン画面に飛ばす
+
+		ログインしているなら
+		セッションに格納されているUserDTOのuser_idを使い
+		CartService→CartDAOにてデータベースからItemInCartDTOを戻り値として取って来る
+
+		遷移元はリクエストオブジェクトでもいいけど
+		冗長になるのでログイン可否共通でセッションを頭に使う
+		 */
+
+
+
+		try {
+			HttpSession session = request.getSession();
+			//このセッションIDの中には遷移元のデータが入っていたりログイン情報以外のデータも入っている可能性があるのでif文でgetSession(false)は使えない
+
+			//session.setAttribute("before", before);
+
+//		    //リクエストのヘッダー情報の遷移元URLを取得
+//		    //request.getHeader("REFERER");
+//
+//		    //リクエストのヘッダー情報の遷移元URLを取得しセッションに格納
+//		    session.setAttribute("referer", request.getHeader("REFERER"));
+//
+//		    request.getRequestDispatcher("/login.jsp").forward(request, response);
+//
+//		    //ログインに成功したら、セッションから遷移元URLを取り出して遷移
+//		    String url = (String)session.getAttribute("referer");
+//		    request.getRequestDispatcher(response.encodeURL(url).substring(29)).forward(request, response);
+
+			//request.getAttribute("javax.servlet.forward.request_uri");
+
+			//ログインユーザーのオブジェクトが入っているかどうか
+			if(session.getAttribute("loginUserInfo") == null) {
+			//空ならログインしてない
+				request.getRequestDispatcher(PathConstant.LOGIN).forward(request, response);
+			}else {
+			//ログインしてる
+
+				UserDTO userDTO = (UserDTO) session.getAttribute("loginUserInfo"); //←ObjectなのでUserDTOにダウンキャスト
+				String userId = userDTO.getUserId();
+
+				CartService cartService = new CartService();
+
+				ArrayList<ItemInCartDTO> returnDTO = cartService.executeCart(userId);
+
+
+			}
+
+		} catch (AmazonException e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+
+			//致命的エラーが発生した場合、ユーザには『システム管理者に連絡してください』
+			//画面を表示する事、それ以外できることはない！
+			request.getRequestDispatcher(PathConstant.ERROR_PAGE).forward(request, response);
+		}
+
+	}
+
+}
+

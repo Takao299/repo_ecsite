@@ -1,0 +1,22 @@
+package com.bh.ecsite.common;
+
+
+/**
+ * JSPにfowradするときのパスを管理するクラス。
+ * ソース上にパスをべた書きすると、別の人間が同じ
+ * パスを記述する時に間違えやすい。
+ * 定数にしておけばそのような危険性を減らすことが
+ * できる。
+ *
+ * */
+public class PathConstant {
+	public static final String MAIN = "WEB-INF/jsp/shop/main.jsp";
+	public static final String LOGIN = "WEB-INF/jsp/shop/login.jsp";
+	public static final String SEARCHRESULT = "WEB-INF/jsp/shop/searchResult.jsp";
+	public static final String ITEMDETAIL = "WEB-INF/jsp/shop/itemDetail.jsp";
+	public static final String CART = "WEB-INF/jsp/shop/cart.jsp";
+	public static final String PURCHASECONFIRM = "WEB-INF/jsp/shop/purchaseConfirm.jsp";
+	public static final String PURCHASECOMMIT = "WEB-INF/jsp/shop/purchaseCommit.jsp";
+	public static final String ERROR_PAGE = "WEB-INF/error.jsp";
+
+}

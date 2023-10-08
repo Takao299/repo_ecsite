@@ -1,0 +1,132 @@
+package com.bh.ecsite.servlet;
+
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import com.bh.ecsite.common.AmazonException;
+import com.bh.ecsite.common.PathConstant;
+import com.bh.ecsite.service.PurchaseCommitService;
+import com.bh.ecsite.value.PurchaseDTO;
+import com.bh.ecsite.value.UserDTO;
+
+/**
+ * Servlet implementation class LoginController
+ *
+ * Loginを表すコントローラ
+ */
+@WebServlet("/PurchaseCommit")
+public class PurchaseCommitServlet extends CommonServlet {
+	private static final long serialVersionUID = 1L;
+
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public PurchaseCommitServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+
+
+
+    //購入者と配送先を入れるドメイン
+    UserDTO parse(String userId, String address) {
+
+    	UserDTO loginDomain = new UserDTO();
+    	loginDomain.setPassword(address);
+    	loginDomain.setUserId(userId);
+
+    	return loginDomain;
+
+    }
+
+
+
+
+    /**
+     * リンククリック、別サイトから移動してきたときに呼ばれ、
+     * ログイン画面用のJSPを表示する。
+     *
+     */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		//response.getWriter().append("Served at: ").append(request.getContextPath());
+
+		doPost(request, response);
+	}
+
+	/**
+	 * ブラウザのformタグでPOST送信された時に呼ばれる
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		//doGet(request, response);
+
+		try {
+			HttpSession session = request.getSession();
+
+			//ログインユーザーのオブジェクトが入っているかどうか
+			if(session.getAttribute("loginUserInfo") == null) {
+			//空ならログインしてない
+				request.getRequestDispatcher(PathConstant.LOGIN).forward(request, response);
+
+			}else {
+			//ログインしてる
+
+				//ログインユーザーのuserIdと配送先をDTOに詰める
+				UserDTO user = (UserDTO)session.getAttribute("loginUserInfo"); //ログイン可否ifの上でも良い
+				String userId = user.getUserId();
+
+				String address = null;
+				//配送先がご自宅指定なら
+				if( request.getParameter("destination").equals("registered") ){
+					address = user.getAddress();		//userをそのまんまloginDomainに詰め込むのあり
+				//自由入力での指定なら
+				}else {
+					address = request.getParameter("address");
+				}
+
+				UserDTO loginDomain = parse(userId, address);
+
+
+				//もしセッションにItemInCartDTOをコレクションで格納しない方式なら
+				//user_idのみをサービスに渡してDBにて芋づる式
+				//UserDTO userDTO = (UserDTO) session.getAttribute("loginUserInfo"); //ダウンキャスト
+				//String userId = userDTO.getUserId();
+
+				//セッションに残したDTOを使うスタイル
+				//そういえばコレクションでDTOが複数入っているのでitemInCartDTOsとかにした方がいいかもしれない
+				//ArrayList<ItemInCartDTO> itemInCartDTO = (ArrayList<ItemInCartDTO>) session.getAttribute("itemInCartDTO"); //ダウンキャスト
+
+				PurchaseCommitService purchaseCommitService = new PurchaseCommitService();
+
+				PurchaseDTO returnDTO = purchaseCommitService.executePurchase(loginDomain);
+				//PurchaseDTO returnDTO = purchaseCommitService.executePurchase(itemInCartDTO, loginDomain);
+
+				//ようやく巨大なセッションオブジェクトを消せる
+				//session.removeAttribute("itemInCartDTO");
+
+
+				request.getRequestDispatcher(PathConstant.PURCHASECOMMIT).forward(request, response);
+
+			}
+
+		} catch (AmazonException e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+
+			//致命的エラーが発生した場合、ユーザには『システム管理者に連絡してください』
+			//画面を表示する事、それ以外できることはない！
+			request.getRequestDispatcher(PathConstant.ERROR_PAGE).forward(request, response);
+		}
+
+	}
+
+
+}

@@ -1,0 +1,174 @@
+package com.bh.ecsite.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import com.bh.ecsite.common.AmazonException;
+import com.bh.ecsite.value.UserDTO;
+
+<<<<<<< .mine
+public class UserDAO extends CommonDAO{
+||||||| .r82
+=======
+public class UserDAO extends CommonDAO{
+
+	//Connection connection = null;
+>>>>>>> .r84
+
+<<<<<<< .mine
+	public UserDAO(Connection connection) {
+		super(connection);
+		// TODO 自動生成されたコンストラクター・スタブ
+||||||| .r82
+=======
+	public UserDAO(Connection connection){
+		super(connection);
+>>>>>>> .r84
+	}
+	/**
+	 * usersテーブルから主キーを元にDTOを１件取得して返す
+	 * 例外はServiceに丸投げ
+	 * @param userId
+	 * @return
+	 * @throws AmazonException
+	 */
+	public UserDTO selectById(String strUserId) throws SQLException{
+
+		PreparedStatement ps = null;
+		UserDTO userDTO =null;
+			try {
+
+
+				String sql = "SELECT user_id, password, name, address" +
+						"  FROM public.users where user_id = ?";
+
+				//SQL実行オブジェクトの取得
+				ps = connection.prepareStatement(sql);
+
+				//WHERE句がプレースホルダになっているので、主キー値
+				//を（画面で入力したユーザID）セット
+				ps.setString(1, strUserId);
+
+				//SELECTを実行
+				ResultSet rs = ps.executeQuery();
+
+
+				//主キーを元に取得しているので結果は０件か１件の
+				//いずれかになる。よってwhileでもよいがifの方が
+				//明示的でよい。
+				if(rs.next()) {
+					//ifがtrueの時DTOをnewすることで、呼びだし側はUserDTOがnullかどうか
+					//で取得の成功・失敗を判断できる。
+					//データベース内にはほかの情報も詰め込まれている
+					//getAddressで得られる
+					userDTO= new UserDTO();
+					userDTO.setUserId(rs.getString("user_id"));
+					userDTO.setPassword(rs.getString("password"));
+					userDTO.setAddress(rs.getString("address"));
+					userDTO.setName(rs.getString("name"));
+				}
+				return userDTO;
+
+			} catch (Exception e) {
+				// TODO 自動生成された catch ブロック
+				e.printStackTrace();
+				throw e;
+			}
+			finally {
+				try{
+					if(ps != null && !ps.isClosed()) {
+						ps.close();
+					}
+				}
+				catch(SQLException e) {
+					throw e;
+				}
+			}
+	}
+
+	public ArrayList<UserDTO> selectAll() throws SQLException{
+
+		PreparedStatement ps = null;
+		ArrayList<UserDTO> list = new ArrayList<>();
+			try {
+
+
+				String sql = "SELECT user_id, password, name, address" +
+						"  FROM public.users ";
+
+				ps = connection.prepareStatement(sql);
+
+
+				ResultSet rs = ps.executeQuery();
+
+
+
+				while(rs.next()) {
+
+					UserDTO userDTO = new UserDTO();
+					userDTO.setUserId(rs.getString("user_id"));
+					userDTO.setPassword(rs.getString("password"));
+					userDTO.setAddress(rs.getString("address"));
+					userDTO.setName(rs.getString("name"));
+					list.add(userDTO);
+				}
+				return list;
+
+			} catch (Exception e) {
+				// TODO 自動生成された catch ブロック
+				e.printStackTrace();
+				throw e;
+			}
+			finally {
+				try{
+					if(ps != null && !ps.isClosed()) {
+						ps.close();
+					}
+				}
+				catch(SQLException e) {
+					throw  e;
+				}
+			}
+	}
+	public int insert(UserDTO userDTO ) throws SQLException{
+
+		PreparedStatement ps = null;
+		int count = 0;
+
+			try {
+
+
+				String sql = "INSERT INTO public.users( user_id, password, name, address) " +
+						"  VALUES(?,?,?,?) ";
+
+				ps = connection.prepareStatement(sql);
+
+				ps.setString(1, userDTO.getUserId());
+				ps.setString(1, userDTO.getPassword());
+				ps.setString(1, userDTO.getName());
+				ps.setString(1, userDTO.getAddress());
+
+
+				count  = ps.executeUpdate();
+				return count;
+
+			} catch (Exception e) {
+				// TODO 自動生成された catch ブロック
+				e.printStackTrace();
+				throw e;
+			}
+			finally {
+				try{
+					if(ps != null && !ps.isClosed()) {
+						ps.close();
+					}
+				}
+				catch(SQLException e) {
+					throw e;
+				}
+			}
+	}
+}
